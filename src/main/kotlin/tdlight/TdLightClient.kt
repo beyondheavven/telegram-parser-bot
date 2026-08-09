@@ -113,15 +113,30 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
     }
 
 
+    /**
+     * suspend-функция, которая приостанавливает выполнение корутины до тех пор,
+     * пока не будет получено состояние AuthorizationStateReady
+     */
     suspend fun awaitReady() = ready.await()
 
+    /**
+     * Возвращает сырой экземпляр клиента для вызова методов напрямую
+     */
     fun rawTelegramClient(): SimpleTelegramClient = client
 
+    /**
+     * Безопасное закрытие клиента и освобождение ресурсов фабрики.
+     * Вызовется автоматически
+     */
     override fun close() {
         if (::client.isInitialized) client.close()
         clientFactory.close()
     }
 
+    /**
+     * Вспомогательная функция-расширение.
+     * Преобразует Java CompletableFuture в Kotlin suspend-функцию.
+     */
     suspend fun <T> CompletableFuture<T>.awaitResult(): T = this.await()
 
 
