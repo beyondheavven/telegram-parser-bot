@@ -27,6 +27,7 @@ dependencies {
     implementation(platform("it.tdlight:tdlight-java-bom:3.5.2+td.1.8.64"))
     implementation("it.tdlight:tdlight-java")
     implementation("it.tdlight:tdlight-natives:_:linux_amd64_gnu_ssl3")
+    implementation("it.tdlight:tdlight-natives:_:windows_amd64")
 
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)
