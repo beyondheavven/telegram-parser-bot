@@ -1,0 +1,11 @@
+services:
+  parser-api:
+    build: .
+    env_file: .env
+    environment:
+      TDLIGHT_SESSION_PATH: /app/tdlight-session
+    volumes:
+      - ./tdlight-session:/app/tdlight-session
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
