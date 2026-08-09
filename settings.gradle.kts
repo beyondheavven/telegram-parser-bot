@@ -12,6 +12,7 @@ plugins {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        maven("https://mvn.mchv.eu/repository/mchv/")
     }
     versionCatalogs {
         create("ktorLibs").from("io.ktor:ktor-version-catalog:3.5.0")
