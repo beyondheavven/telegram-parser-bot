@@ -22,6 +22,8 @@ dependencies {
     implementation(ktorLibs.server.swagger)
     implementation(libs.logback.classic)
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.10.1")
+
     implementation(platform("it.tdlight:tdlight-java-bom:3.5.2+td.1.8.64"))
     implementation("it.tdlight:tdlight-java")
     implementation("it.tdlight:tdlight-natives:_:linux_amd64_gnu_ssl3")
