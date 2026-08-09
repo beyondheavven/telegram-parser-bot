@@ -3,5 +3,7 @@ ktor:
     port: 8080
   application:
     modules:
-      - com.telegram.HttpKt.configureHttp
-      - com.telegram.RoutingKt.configureRouting
+      - com.telegram.plugins.HttpKt.configureHttp
+      - com.telegram.plugins.RoutingKt.configureRouting
+      - com.telegram.plugins.OpenApiKt.configureOpenApi
+      - com.telegram.plugins.TdLightKt.configureTdLight

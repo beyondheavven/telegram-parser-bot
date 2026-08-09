@@ -1,7 +1,9 @@
 .gradle/
+.git
 .idea/
 build/
 out/
 *.iml
 .env
-tdlight-session/
+tdlight-session
+*.md
