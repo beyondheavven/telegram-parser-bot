@@ -1,5 +1,6 @@
 package com.telegram.tdlight
 
+import com.telegram.models.AuthStatusResponse
 import it.tdlight.Init
 import it.tdlight.Log
 import it.tdlight.client.APIToken
@@ -10,10 +11,25 @@ import it.tdlight.Slf4JLogMessageHandler
 import it.tdlight.client.TDLibSettings
 import it.tdlight.jni.TdApi
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+
+enum class TdLightAuthStatus {
+    NOT_STARTED,
+    WAITING_FOR_CODE,
+    WAITING_FOR_PASSWORD,
+    READY,
+    CLOSED
+}
 
 /**
  * Класс-клиент для работы с Telegram через TDLight.
@@ -31,8 +47,20 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
     //Сам клиент. Помечен как lateinit, позже будет проинициализирован в методе start()
     private lateinit var client: SimpleTelegramClient
 
+    @Volatile
+    private var codeDeferred: CompletableDeferred<String>? = null
+
+    @Volatile
+    private var passwordDeferred: CompletableDeferred<String>? = null
+
     //Асинхронный флаг, который срабатывает, когда клиент успешно авторизуется
     private val ready = CompletableDeferred<Unit>()
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    private val _authStatus = MutableStateFlow(TdLightAuthStatus.NOT_STARTED)
+
+    val authStatus: StateFlow<TdLightAuthStatus> = _authStatus.asStateFlow()
 
     /**
      * Запуск и конфигурация клиента
@@ -78,38 +106,50 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
 
             //Telegram просит ввести код из смс
             is TdApi.AuthorizationStateWaitCode -> {
-                val code = config.authCode ?: error("Auth code is required, bit TDLIGHT_AUTH_CODE is not set")
-
-                //Отправка кода в Telegram
-                client.send(TdApi.CheckAuthenticationCode(code))
-                    .exceptionally { log.error("Code is not verified", it); null }
+                log.info("Waiting for code")
+                _authStatus.value = TdLightAuthStatus.WAITING_FOR_CODE
+                scope.launch {
+                    collectCodeUntilAccept()
+                }
             }
 
             //У пользователя включена 2FA, требуется пароль
             is TdApi.AuthorizationStateWaitPassword -> {
-                val password = config.password ?: error("Auth password is required, bit TDLIGHT_PASSWORD is not set")
-
-                //Отправляем пароль
-                client.send(TdApi.CheckAuthenticationPassword(password))
-                    .exceptionally { log.error("Password is not verified", it); null }
+                log.info("Waiting for password")
+                _authStatus.value = TdLightAuthStatus.WAITING_FOR_PASSWORD
+                scope.launch {
+                    collectPasswordUntilAccepted()
+                }
             }
 
             //Авторизация прошла успешно, клиент готов к работе
             is TdApi.AuthorizationStateReady -> {
                 log.info("TDLight is ready")
-                //Завершаем Deffered, разблокируем все корутины
-                ready.complete(Unit)
+                _authStatus.value = TdLightAuthStatus.READY
+                if (!ready.isCompleted) ready.complete(Unit)
             }
 
             //Клиент закрыл подключение
             is TdApi.AuthorizationStateClosed -> {
                 log.info("TDLight is closed")
+                _authStatus.value = TdLightAuthStatus.CLOSED
             }
 
             //Логируем все остальные промежуточные состояния для отладки
             else -> {log.debug("Auth state: {}", authorizationState.javaClass.simpleName)}
 
         }
+    }
+
+
+    private suspend fun collectCodeUntilAccept() {
+        while(true) {
+
+        }
+    }
+
+    private suspend fun collectPasswordUntilAccepted() {
+        //TODO
     }
 
 
