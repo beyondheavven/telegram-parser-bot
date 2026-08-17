@@ -11,6 +11,7 @@ import io.ktor.server.routing.routingRoot
 fun Application.configureOpenApi(){
     routing {
         swaggerUI(path = "swagger-ui") {
+            version = "5.31.0"
             info = OpenApiInfo("Telegram Parser API", "1.0.0")
             source = OpenApiDocSource.Routing(ContentType.Application.Json){
                 routingRoot.descendants()

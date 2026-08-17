@@ -38,13 +38,10 @@ enum class TdLightAuthStatus {
  */
 class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
 
-    //Инициализация логгера SLF4J для этого класса
     private val log = LoggerFactory.getLogger(TdLightClient::class.java)
 
-    //Фабрика, отвечающая за создание экземпляров клиента Telegram
     private val clientFactory = SimpleTelegramClientFactory()
 
-    //Сам клиент. Помечен как lateinit, позже будет проинициализирован в методе start()
     private lateinit var client: SimpleTelegramClient
 
     @Volatile
@@ -53,7 +50,6 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
     @Volatile
     private var passwordDeferred: CompletableDeferred<String>? = null
 
-    //Асинхронный флаг, который срабатывает, когда клиент успешно авторизуется
     private val ready = CompletableDeferred<Unit>()
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -62,49 +58,35 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
 
     val authStatus: StateFlow<TdLightAuthStatus> = _authStatus.asStateFlow()
 
-    /**
-     * Запуск и конфигурация клиента
-     */
+
     fun start(){
-        //Инициализация нативных библиотек TDLib
         Init.init()
 
-        //Перенаправление внутренних логов TDLib в собственный логгер
         Log.setLogMessageHandler(1, Slf4JLogMessageHandler())
 
-        //Создание токена приложения
         val apiToken = APIToken(config.apiId, config.apiHash)
 
-        //Создание базовых настроек на основе токена
         val settings = TDLibSettings.create(apiToken)
 
-        //Настройка путей, где TDLib будет хранить свою базу данных (кэш, сессии) и скачанные файлы
         val sessionPath = Path.of(config.sessionPath)
         settings.databaseDirectoryPath = sessionPath.resolve("data")
         settings.downloadedFilesDirectoryPath = sessionPath.resolve("downloads")
 
-        //Создание билдера клиента с переданными настройками
         val builder = clientFactory.builder(settings)
 
-        //Добавление слушателя событий для обновлений состояний авторизации
         builder.addUpdateHandler(TdApi.UpdateAuthorizationState::class.java){
             update -> handleAuthorizationState(update.authorizationState)
         }
 
-        //Авторизация происходит как обычный пользователь (через номер телефона)
         val authData = AuthenticationSupplier.user(config.phoneNumber)
 
-        //Финальная сборка клиента
         client = builder.build(authData)
     }
 
-    /**
-     * Метод обрабатывает различные этапы авторизации в Telegram
-     */
+
     private fun handleAuthorizationState(authorizationState: TdApi.AuthorizationState){
         when(authorizationState){
 
-            //Telegram просит ввести код из смс
             is TdApi.AuthorizationStateWaitCode -> {
                 log.info("Waiting for code")
                 _authStatus.value = TdLightAuthStatus.WAITING_FOR_CODE
@@ -113,7 +95,6 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
                 }
             }
 
-            //У пользователя включена 2FA, требуется пароль
             is TdApi.AuthorizationStateWaitPassword -> {
                 log.info("Waiting for password")
                 _authStatus.value = TdLightAuthStatus.WAITING_FOR_PASSWORD
@@ -122,20 +103,17 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
                 }
             }
 
-            //Авторизация прошла успешно, клиент готов к работе
             is TdApi.AuthorizationStateReady -> {
                 log.info("TDLight is ready")
                 _authStatus.value = TdLightAuthStatus.READY
                 if (!ready.isCompleted) ready.complete(Unit)
             }
 
-            //Клиент закрыл подключение
             is TdApi.AuthorizationStateClosed -> {
                 log.info("TDLight is closed")
                 _authStatus.value = TdLightAuthStatus.CLOSED
             }
 
-            //Логируем все остальные промежуточные состояния для отладки
             else -> {log.debug("Auth state: {}", authorizationState.javaClass.simpleName)}
 
         }
@@ -144,30 +122,42 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
 
     private suspend fun collectCodeUntilAccept() {
         while(true) {
+            val deferred = CompletableDeferred<String>()
+            codeDeferred = deferred
 
+            val code = deferred.await()
+
+            client.send(TdApi.CheckAuthenticationCode(code)).awaitResult()
+            codeDeferred = null
         }
     }
 
     private suspend fun collectPasswordUntilAccepted() {
-        //TODO
+        val deferred = CompletableDeferred<String>()
+        passwordDeferred = deferred
+
+        val password = deferred.await()
+
+        client.send(TdApi.CheckAuthenticationPassword(password)).awaitResult()
+        passwordDeferred = null
+    }
+
+    fun submitCode(code: String) {
+        val deferred = codeDeferred ?: error("Client waiting for code: $code")
+        deferred.complete(code)
+    }
+
+    fun submitPassword(password: String) {
+        val deferred = passwordDeferred ?: error("Client waiting for password: $password")
+        deferred.complete(password)
     }
 
 
-    /**
-     * suspend-функция, которая приостанавливает выполнение корутины до тех пор,
-     * пока не будет получено состояние AuthorizationStateReady
-     */
     suspend fun awaitReady() = ready.await()
 
-    /**
-     * Возвращает сырой экземпляр клиента для вызова методов напрямую
-     */
+
     fun rawTelegramClient(): SimpleTelegramClient = client
 
-    /**
-     * Безопасное закрытие клиента и освобождение ресурсов фабрики.
-     * Вызовется автоматически
-     */
     override fun close() {
         if (::client.isInitialized) client.close()
         clientFactory.close()
