@@ -3,6 +3,7 @@ package com.telegram
 import com.telegram.plugins.configureHttp
 import com.telegram.plugins.configureOpenApi
 import com.telegram.plugins.configureRouting
+import com.telegram.plugins.configureSerialization
 import com.telegram.plugins.configureTdLight
 import io.ktor.server.application.Application
 
@@ -13,6 +14,7 @@ fun main(args: Array<String>) {
 fun Application.module() {
     configureTdLight()
     configureOpenApi()
+    configureSerialization()
     configureRouting()
     configureHttp()
 }
