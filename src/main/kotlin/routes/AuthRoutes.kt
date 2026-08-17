@@ -74,7 +74,6 @@ fun Route.authRoutes() {
 
         post("/password"){
             val client = call.application.tdLightClient
-
             if(client.authStatus.value != TdLightAuthStatus.WAITING_FOR_PASSWORD){
                 call.respond(HttpStatusCode.Conflict, SimpleMessageResponse("Client is not waiting for password"))
                 return@post

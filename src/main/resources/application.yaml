@@ -5,5 +5,6 @@ ktor:
     modules:
       - com.telegram.plugins.HttpKt.configureHttp
       - com.telegram.plugins.RoutingKt.configureRouting
+      - com.telegram.plugins.SerializationKt.configureSerialization
       - com.telegram.plugins.OpenApiKt.configureOpenApi
       - com.telegram.plugins.TdLightKt.configureTdLight
