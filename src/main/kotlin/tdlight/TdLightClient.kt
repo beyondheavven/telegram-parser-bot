@@ -144,12 +144,34 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
 
     private suspend fun collectCodeUntilAccept() {
         while(true) {
+            val deferred = CompletableDeferred<String>()
+            codeDeferred = deferred
 
+            val code = deferred.await()
+
+            client.send(TdApi.CheckAuthenticationCode(code)).awaitResult()
+            codeDeferred = null
         }
     }
 
     private suspend fun collectPasswordUntilAccepted() {
-        //TODO
+        val deferred = CompletableDeferred<String>()
+        passwordDeferred = deferred
+
+        val password = deferred.await()
+
+        client.send(TdApi.CheckAuthenticationPassword(password)).awaitResult()
+        passwordDeferred = null
+    }
+
+    fun submitCode(code: String) {
+        val deferred = codeDeferred ?: error("Client waiting for code: $code")
+        deferred.complete(code)
+    }
+
+    fun submitPassword(password: String) {
+        val deferred = passwordDeferred ?: error("Client waiting for password: $password")
+        deferred.complete(password)
     }
 
 
