@@ -1,6 +1,12 @@
 package com.telegram.routes
 
+import com.telegram.controllers.AuthActionsResult
+import com.telegram.controllers.authController
+import com.telegram.models.SubmitCodeRequest
+import com.telegram.models.SubmitPasswordRequest
 import com.telegram.plugins.tdLightClient
+import com.telegram.routes.docs.describeAuthStatus
+import com.telegram.routes.docs.describeSubmitCode
 import com.telegram.tdlight.TdLightAuthStatus
 import io.ktor.http.HttpStatusCode
 import io.ktor.openapi.ReferenceOr.Companion.schema
@@ -15,88 +21,28 @@ import io.ktor.server.routing.route
 import io.ktor.utils.io.ExperimentalKtorApi
 import kotlinx.serialization.Serializable
 
-@Serializable
-data class SubmitCodeRequest(val code: String)
-
-@Serializable
-data class SubmitPasswordRequest(val password: String)
-
-@Serializable
-data class AuthStatusResponse(val status: String)
-
-@Serializable
-data class SimpleMessageResponse(val message: String)
-
 @OptIn(ExperimentalKtorApi::class)
 fun Route.authRoutes() {
     route("/api/auth"){
 
         get("/status"){
-            val status = call.application.tdLightClient.authStatus.value
-            call.respond(AuthStatusResponse(status.name))
-        }.describe {
-            summary = "Current auth status in Telegram"
-            responses {
-                HttpStatusCode.OK {
-                    description = "Status OK"
-                    schema = jsonSchema<AuthStatusResponse>()
-                }
-            }
-        }
+            call.respond(call.application.authController.getStatus())
+        }.describeAuthStatus()
 
         post("/code"){
-            val client = call.application.tdLightClient
-
-            if(client.authStatus.value != TdLightAuthStatus.WAITING_FOR_CODE){
-                call.respond(HttpStatusCode.Conflict, SimpleMessageResponse("Wrong code"))
-                return@post
-            }
-
             val request = call.receive<SubmitCodeRequest>()
-            client.submitCode(request.code)
-            call.respond(HttpStatusCode.Accepted, SimpleMessageResponse("code_submitted"))
-        }.describe {
-            summary = "Waiting for code from Telegram"
-            requestBody{
-                schema = jsonSchema<SubmitCodeRequest>()
+            when (val result = call.application.authController.submitCode(request)) {
+                is AuthActionsResult.Accepted -> call.respond(HttpStatusCode.OK)
+                is AuthActionsResult.Conflict -> call.respond(HttpStatusCode.Conflict)
             }
-            responses {
-                HttpStatusCode.Accepted {
-                    description = "Code submitted"
-                    schema = jsonSchema<SimpleMessageResponse>()
-                }
-                HttpStatusCode.Conflict {
-                    description = "Code not found"
-                    schema = jsonSchema<SimpleMessageResponse>()
-                }
-            }
-        }
+        }.describeSubmitCode()
 
         post("/password"){
-            val client = call.application.tdLightClient
-            if(client.authStatus.value != TdLightAuthStatus.WAITING_FOR_PASSWORD){
-                call.respond(HttpStatusCode.Conflict, SimpleMessageResponse("Client is not waiting for password"))
-                return@post
-            }
-
             val request = call.receive<SubmitPasswordRequest>()
-            client.submitPassword(request.password)
-            call.respond(HttpStatusCode.Accepted, SimpleMessageResponse("Password submitted"))
-        }.describe {
-            summary = "Waiting for password from Telegram"
-            requestBody{
-                schema = jsonSchema<AuthStatusResponse>()
+            when (val result = call.application.authController.submitPassword(request)) {
+                is AuthActionsResult.Accepted -> call.respond(HttpStatusCode.OK)
+                is AuthActionsResult.Conflict -> call.respond(HttpStatusCode.Conflict)
             }
-            responses {
-                HttpStatusCode.Accepted {
-                    description = "Password submitted"
-                    schema = jsonSchema<SimpleMessageResponse>()
-                }
-                HttpStatusCode.Conflict {
-                    description = "Password not found"
-                    schema = jsonSchema<SimpleMessageResponse>()
-                }
-            }
-        }
+        }.describeSubmitPassword()
     }
 }
