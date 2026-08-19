@@ -2,6 +2,7 @@ package com.telegram.routes
 
 import com.telegram.controllers.AuthActionsResult
 import com.telegram.controllers.authController
+import com.telegram.models.SimpleMessageResponse
 import com.telegram.models.SubmitCodeRequest
 import com.telegram.models.SubmitPasswordRequest
 import com.telegram.plugins.tdLightClient
@@ -25,6 +26,20 @@ import kotlinx.serialization.Serializable
 @OptIn(ExperimentalKtorApi::class)
 fun Route.authRoutes() {
     route("/api/auth"){
+        post("/start"){
+            when (val result = call.application.authController.start()){
+                is AuthActionsResult.Accepted -> call.respond(HttpStatusCode.Accepted, SimpleMessageResponse(result.message))
+                is AuthActionsResult.Conflict -> call.respond(HttpStatusCode.Conflict, SimpleMessageResponse(result.errorMessage))
+            }
+        }
+
+        post("/resend-code"){
+            when (val result = call.application.authController.resendCode()){
+                is AuthActionsResult.Accepted -> call.respond(HttpStatusCode.Accepted, SimpleMessageResponse(result.message))
+                is AuthActionsResult.Conflict -> call.respond(HttpStatusCode.Conflict, SimpleMessageResponse(result.errorMessage))
+            }
+        }
+
 
         get("/status"){
             call.respond(call.application.authController.getStatus())

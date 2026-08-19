@@ -15,6 +15,22 @@ sealed class AuthActionsResult {
 
 class AuthController(private val client: TdLightClient) {
 
+    fun start(): AuthActionsResult {
+        if (client.authStatus.value != TdLightAuthStatus.NOT_STARTED){
+            return AuthActionsResult.Conflict("Auth process is already running (status: ${client.authStatus.value})")
+        }
+        client.start()
+        return AuthActionsResult.Accepted("auth_started")
+    }
+
+    suspend fun resendCode(): AuthActionsResult {
+        if (client.authStatus.value != TdLightAuthStatus.WAITING_FOR_CODE){
+            return AuthActionsResult.Conflict("Not currently waiting for code")
+        }
+        client.resendCode()
+        return AuthActionsResult.Accepted("code_resent")
+    }
+
     fun getStatus(): AuthStatusResponse = AuthStatusResponse(client.authStatus.value.name)
 
     fun submitCode(request: SubmitCodeRequest): AuthActionsResult {

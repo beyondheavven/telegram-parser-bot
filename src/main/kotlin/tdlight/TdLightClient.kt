@@ -163,6 +163,10 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
         return result.messages.filterNotNull()
     }
 
+    suspend fun resendCode(){
+        client.send(TdApi.ResendAuthenticationCode()).awaitResult()
+    }
+
 
     suspend fun awaitReady() = ready.await()
 
