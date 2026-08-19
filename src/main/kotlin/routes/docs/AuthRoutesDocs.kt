@@ -87,3 +87,18 @@ fun Route.describeSubmitPassword() = describe {
         }
     }
 }
+
+@OptIn(ExperimentalKtorApi::class)
+fun Route.describeStopClient() = describe {
+    summary = "Stop client"
+    responses {
+        HttpStatusCode.Accepted {
+            description = "Client stopped"
+            schema = jsonSchema<SimpleMessageResponse>()
+        }
+        HttpStatusCode.Conflict {
+            description = "Client is not running"
+            schema = jsonSchema<SimpleMessageResponse>()
+        }
+    }
+}

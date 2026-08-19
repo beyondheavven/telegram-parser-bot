@@ -6,7 +6,6 @@ import com.telegram.models.ErrorResponse
 import com.telegram.routes.docs.describeGetMessagesByUsername
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route

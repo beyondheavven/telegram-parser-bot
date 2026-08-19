@@ -3,18 +3,15 @@ package com.telegram.plugins
 import com.telegram.tdlight.TdLightClient
 import com.telegram.tdlight.TdLightConfig
 import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.util.AttributeKey
-import kotlinx.coroutines.launch
-
 
 val TdLightClientKey = AttributeKey<TdLightClient>("TdLightCLient")
 
 fun Application.configureTdLight() {
     val tdLightClient = TdLightClient(TdLightConfig.fromEnv())
     attributes.put(TdLightClientKey, tdLightClient)
-    monitor.subscribe(ApplicationStarted){
+    monitor.subscribe(ApplicationStopped){
         tdLightClient.close()
     }
 }

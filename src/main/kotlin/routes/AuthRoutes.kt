@@ -5,25 +5,19 @@ import com.telegram.controllers.authController
 import com.telegram.models.SimpleMessageResponse
 import com.telegram.models.SubmitCodeRequest
 import com.telegram.models.SubmitPasswordRequest
-import com.telegram.plugins.tdLightClient
 import com.telegram.routes.docs.describeAuthStatus
 import com.telegram.routes.docs.describeResendCode
 import com.telegram.routes.docs.describeStartApp
 import com.telegram.routes.docs.describeSubmitCode
 import com.telegram.routes.docs.describeSubmitPassword
-import com.telegram.tdlight.TdLightAuthStatus
 import io.ktor.http.HttpStatusCode
-import io.ktor.openapi.ReferenceOr.Companion.schema
-import io.ktor.openapi.jsonSchema
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
-import io.ktor.server.routing.openapi.describe
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.utils.io.ExperimentalKtorApi
-import kotlinx.serialization.Serializable
 
 @OptIn(ExperimentalKtorApi::class)
 fun Route.authRoutes() {
@@ -41,6 +35,13 @@ fun Route.authRoutes() {
                 is AuthActionsResult.Conflict -> call.respond(HttpStatusCode.Conflict, SimpleMessageResponse(result.errorMessage))
             }
         }.describeResendCode()
+
+        post("/stop"){
+            when(val result = call.application.authController.stop()){
+                is AuthActionsResult.Accepted -> call.respond(HttpStatusCode.Accepted, SimpleMessageResponse(result.message))
+                is AuthActionsResult.Conflict -> call.respond(HttpStatusCode.Conflict, SimpleMessageResponse(result.errorMessage))
+            }
+        }.describeStopClient()
 
         get("/status"){
             call.respond(call.application.authController.getStatus())
