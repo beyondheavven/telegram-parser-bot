@@ -152,6 +152,17 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
         deferred.complete(password)
     }
 
+    suspend fun resolveChannel(username: String): TdApi.Chat {
+        return client.send(TdApi.SearchPublicChat(username)).awaitResult()
+    }
+
+    suspend fun getChatHistory(chatId: Long, fromMessageId: Long, limit: Int): List<TdApi.Message> {
+        val result = client.send(
+            TdApi.GetChatHistory(chatId, fromMessageId,0, limit, false)
+        ).awaitResult()
+        return result.messages.filterNotNull()
+    }
+
 
     suspend fun awaitReady() = ready.await()
 
@@ -163,10 +174,6 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
         clientFactory.close()
     }
 
-    /**
-     * Вспомогательная функция-расширение.
-     * Преобразует Java CompletableFuture в Kotlin suspend-функцию.
-     */
     suspend fun <T> CompletableFuture<T>.awaitResult(): T = this.await()
 
 
