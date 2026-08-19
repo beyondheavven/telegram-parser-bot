@@ -7,6 +7,7 @@ import com.telegram.models.SubmitPasswordRequest
 import com.telegram.plugins.tdLightClient
 import com.telegram.routes.docs.describeAuthStatus
 import com.telegram.routes.docs.describeSubmitCode
+import com.telegram.routes.docs.describeSubmitPassword
 import com.telegram.tdlight.TdLightAuthStatus
 import io.ktor.http.HttpStatusCode
 import io.ktor.openapi.ReferenceOr.Companion.schema
