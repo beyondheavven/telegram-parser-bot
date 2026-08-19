@@ -7,6 +7,8 @@ import com.telegram.models.SubmitCodeRequest
 import com.telegram.models.SubmitPasswordRequest
 import com.telegram.plugins.tdLightClient
 import com.telegram.routes.docs.describeAuthStatus
+import com.telegram.routes.docs.describeResendCode
+import com.telegram.routes.docs.describeStartApp
 import com.telegram.routes.docs.describeSubmitCode
 import com.telegram.routes.docs.describeSubmitPassword
 import com.telegram.tdlight.TdLightAuthStatus
@@ -31,15 +33,14 @@ fun Route.authRoutes() {
                 is AuthActionsResult.Accepted -> call.respond(HttpStatusCode.Accepted, SimpleMessageResponse(result.message))
                 is AuthActionsResult.Conflict -> call.respond(HttpStatusCode.Conflict, SimpleMessageResponse(result.errorMessage))
             }
-        }
+        }.describeStartApp()
 
         post("/resend-code"){
             when (val result = call.application.authController.resendCode()){
                 is AuthActionsResult.Accepted -> call.respond(HttpStatusCode.Accepted, SimpleMessageResponse(result.message))
                 is AuthActionsResult.Conflict -> call.respond(HttpStatusCode.Conflict, SimpleMessageResponse(result.errorMessage))
             }
-        }
-
+        }.describeResendCode()
 
         get("/status"){
             call.respond(call.application.authController.getStatus())
