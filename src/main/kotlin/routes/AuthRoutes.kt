@@ -8,6 +8,7 @@ import com.telegram.models.SubmitPasswordRequest
 import com.telegram.routes.docs.describeAuthStatus
 import com.telegram.routes.docs.describeResendCode
 import com.telegram.routes.docs.describeStartApp
+import com.telegram.routes.docs.describeStopClient
 import com.telegram.routes.docs.describeSubmitCode
 import com.telegram.routes.docs.describeSubmitPassword
 import io.ktor.http.HttpStatusCode

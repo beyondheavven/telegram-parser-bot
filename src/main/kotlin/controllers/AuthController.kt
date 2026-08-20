@@ -50,7 +50,7 @@ class AuthController(private val client: TdLightClient) {
     fun getStatus(): AuthStatusResponse = AuthStatusResponse(client.authStatus.value.name)
 
     fun submitCode(request: SubmitCodeRequest): AuthActionsResult {
-        if (client.authStatus.value != TdLightAuthStatus.WAITING_FOR_PASSWORD){
+        if (client.authStatus.value != TdLightAuthStatus.WAITING_FOR_CODE){
             return AuthActionsResult.Conflict("Client is not waiting for code")
         }
 
