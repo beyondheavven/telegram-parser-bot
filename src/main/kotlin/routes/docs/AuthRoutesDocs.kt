@@ -23,6 +23,36 @@ fun Route.describeAuthStatus() = describe {
 }
 
 @OptIn(ExperimentalKtorApi::class)
+fun Route.describeStartApp() = describe {
+    summary = "Start an Application"
+    responses {
+        HttpStatusCode.Accepted {
+            description = "Auth process started successfully"
+            schema = jsonSchema<SimpleMessageResponse>()
+        }
+        HttpStatusCode.Conflict {
+            description = "Auth process is running"
+            schema = jsonSchema<SimpleMessageResponse>()
+        }
+    }
+}
+
+@OptIn(ExperimentalKtorApi::class)
+fun Route.describeResendCode() = describe {
+    summary = "Resend code of a Telegram Code"
+    responses {
+        HttpStatusCode.Accepted {
+            description = "Code resent successfully"
+            schema = jsonSchema<SimpleMessageResponse>()
+        }
+        HttpStatusCode.Conflict {
+            description = "Client is not waiting for code"
+            schema = jsonSchema<SimpleMessageResponse>()
+        }
+    }
+}
+
+@OptIn(ExperimentalKtorApi::class)
 fun Route.describeSubmitCode() = describe {
     summary = "Submit code for Telegram"
     requestBody {
@@ -53,6 +83,21 @@ fun Route.describeSubmitPassword() = describe {
         }
         HttpStatusCode.Conflict {
             description = "Http status Conflict"
+            schema = jsonSchema<SimpleMessageResponse>()
+        }
+    }
+}
+
+@OptIn(ExperimentalKtorApi::class)
+fun Route.describeStopClient() = describe {
+    summary = "Stop client"
+    responses {
+        HttpStatusCode.Accepted {
+            description = "Client stopped"
+            schema = jsonSchema<SimpleMessageResponse>()
+        }
+        HttpStatusCode.Conflict {
+            description = "Client is not running"
             schema = jsonSchema<SimpleMessageResponse>()
         }
     }

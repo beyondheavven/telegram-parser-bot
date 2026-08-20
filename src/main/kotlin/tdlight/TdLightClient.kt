@@ -14,14 +14,17 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
+import kotlin.time.Duration.Companion.milliseconds
 
 enum class TdLightAuthStatus {
     NOT_STARTED,
@@ -161,6 +164,19 @@ class TdLightClient(private val config: TdLightConfig) : AutoCloseable {
             TdApi.GetChatHistory(chatId, fromMessageId,0, limit, false)
         ).awaitResult()
         return result.messages.filterNotNull()
+    }
+
+    suspend fun resendCode(){
+        withTimeout(15_000.milliseconds){
+            client.send(TdApi.ResendAuthenticationCode()).awaitResult()
+
+        }
+    }
+
+    fun stopClient(){
+        if (::client.isInitialized){
+            client.close()
+        }
     }
 
 

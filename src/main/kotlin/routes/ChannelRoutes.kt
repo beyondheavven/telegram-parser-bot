@@ -3,16 +3,16 @@ package com.telegram.routes
 import com.telegram.controllers.ChannelHistoryResult
 import com.telegram.controllers.channelController
 import com.telegram.models.ErrorResponse
+import com.telegram.routes.docs.describeGetMessagesByUsername
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 
 fun Route.channelRoutes() {
     route("/api/channels"){
-        get("/username/messages"){
+        get("/{username}/messages"){
             val username = call.parameters["username"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, ErrorResponse("Username is required"))
 
@@ -24,7 +24,7 @@ fun Route.channelRoutes() {
                 is ChannelHistoryResult.Failure -> call.respond(HttpStatusCode.BadRequest, ErrorResponse(result.error))
                 is ChannelHistoryResult.NotFound -> call.respond(HttpStatusCode.NotFound, ErrorResponse(result.error))
             }
-        }
+        }.describeGetMessagesByUsername()
 
     }
 }
