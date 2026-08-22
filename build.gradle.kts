@@ -32,6 +32,7 @@ dependencies {
     implementation("it.tdlight:tdlight-natives") {
         artifact { classifier = "linux_amd64_gnu_ssl3" }
     }
+    implementation("org.apache.kafka:kafka-clients:3.9.0")
 
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)
