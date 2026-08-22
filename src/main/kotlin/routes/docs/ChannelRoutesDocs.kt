@@ -11,6 +11,16 @@ import io.ktor.utils.io.ExperimentalKtorApi
 @OptIn(ExperimentalKtorApi::class)
 fun Route.describeGetMessagesByUsername() = describe {
     summary = "Get messages by username"
+    parameters {
+        query("limit"){
+            description = "Counts of messages to return back"
+            required = false
+        }
+        query("fromMessageId"){
+            description = "Id of the message, where to start counting messages"
+            required = false
+        }
+    }
     responses {
         HttpStatusCode.OK {
             description = "Messages are retrieved"
