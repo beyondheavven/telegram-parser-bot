@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 data class ChannelMessageResponse (
     val id: Long,
     val date: Int,
-    val text: String
+    val type: String,
+    val text: String? = null
 )
 
 @Serializable

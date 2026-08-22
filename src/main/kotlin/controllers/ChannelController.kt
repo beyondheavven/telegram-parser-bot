@@ -20,7 +20,7 @@ class ChannelController(private val client: TdLightClient) {
         return try {
             val chat = client.resolveChannel(username)
             val message = client.getChatHistory(chat.id, fromMessageId, limit)
-            val dto = message.mapNotNull { it.toDto() }
+            val dto = message.map { it.toDto() }
             ChannelHistoryResult.Success(ChannelHistoryResponse(username, dto))
         } catch (e: TelegramError){
             ChannelHistoryResult.NotFound(e.message ?: "Channel not found")
@@ -30,11 +30,20 @@ class ChannelController(private val client: TdLightClient) {
     }
 
     private fun TdApi.Message.toDto(): ChannelMessageResponse {
-        val text = when (val content = this.content) {
-            is TdApi.MessageText -> content.text.text
-            else -> "Text is empty"
+        val content = this.content
+        val (type, text) = when(content) {
+            is TdApi.MessageText -> "text" to content.text.text
+            is TdApi.MessagePhoto -> "photo" to content.caption.text.ifBlank { null }
+            is TdApi.MessageVideo -> "video" to content.caption.text.ifBlank { null }
+            is TdApi.MessageAudio -> "audio" to content.caption.text.ifBlank { null }
+            is TdApi.MessageAnimation -> "animation" to content.caption.text.ifBlank { null }
+            is TdApi.MessageDocument -> "document" to content.caption.text.ifBlank { null }
+            is TdApi.MessageVoiceNote -> "voice-note" to content.caption.text.ifBlank { null }
+            is TdApi.MessageSticker -> "sticker" to content.sticker.emoji
+            is TdApi.MessageAnimatedEmoji -> "animated_emoji" to content.emoji
+            else -> "unsupported" to null
         }
-        return ChannelMessageResponse(id = this.id, date = this.date, text = text)
+        return ChannelMessageResponse(id = this.id, date = this.date, type = type, text = text)
     }
 }
 
