@@ -16,7 +16,7 @@ fun Route.channelRoutes() {
             val username = call.parameters["username"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, ErrorResponse("Username is required"))
 
-            val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
+            val limit = (call.request.queryParameters["limit"]?.toIntOrNull() ?: 20).coerceIn(1,100)
             val fromMessageId =  call.request.queryParameters["fromMessageId"]?.toLongOrNull() ?: 0
 
             when(val result = call.application.channelController.getHistory(username, limit, fromMessageId)){
