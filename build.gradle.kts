@@ -32,6 +32,9 @@ dependencies {
     implementation("it.tdlight:tdlight-natives") {
         artifact { classifier = "linux_amd64_gnu_ssl3" }
     }
+
+    implementation("com.github.danielwegener:logback-kafka-appender:0.2.0-RC2")
+
     implementation("org.apache.kafka:kafka-clients:3.9.0")
 
     testImplementation(kotlin("test"))
